@@ -286,3 +286,11 @@ debian-dist: distclean debian-dist-common
 # assumes you ran one of the previous 2 target first
 debian-sbuild:
 	cd $(TMP_DIST_DIR)/fortio-$(DIST_VERSION); sbuild
+
+# cloud build
+cloud-build: gcloudignore
+	gcloud builds submit --config=cloudbuild.yaml --ignore-file=.gcloudignore
+
+# create an empty .gcloudignore so cloud-build will not ignore .git* directories
+gcloudignore:
+	-touch .gcloudignore

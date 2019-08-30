@@ -26,12 +26,14 @@ import (
 	"strings"
 	"sync/atomic"
 	"time"
+
 	// get /debug/pprof endpoints on a mux through SetupPPROF
 	"net/http/pprof"
 
 	"fortio.org/fortio/fnet"
 	"fortio.org/fortio/log"
 	"fortio.org/fortio/version"
+	"github.com/golang/glog"
 )
 
 // -- Echo Server --
@@ -45,9 +47,9 @@ var (
 
 // EchoHandler is an http server handler echoing back the input.
 func EchoHandler(w http.ResponseWriter, r *http.Request) {
-	if log.LogVerbose() {
-		LogRequest(r, "Echo") // will also print headers
-	}
+	// if log.LogVerbose() {
+	LogRequest(r, "Echo") // will also print headers
+	// }
 	data, err := ioutil.ReadAll(r.Body) // must be done before calling FormValue
 	if err != nil {
 		log.Errf("Error reading %v", err)
@@ -149,6 +151,25 @@ func HTTPServer(name string, port string) (*http.ServeMux, net.Addr) {
 	}
 	go func() {
 		err := s.Serve(listener)
+		if err != nil {
+			log.Fatalf("Unable to serve %s on %s: %v", name, addr.String(), err)
+		}
+	}()
+	return m, addr
+}
+
+// HTTPSServer creates a https server named name on address/port port
+func HTTPSServer(name, port, cert, key string) (*http.ServeMux, net.Addr) {
+	m := http.NewServeMux()
+	s := &http.Server{
+		Handler: m,
+	}
+	listener, addr := fnet.Listen(name, port)
+	if listener == nil {
+		return nil, nil // error already logged
+	}
+	go func() {
+		err := s.ServeTLS(listener, cert, key)
 		if err != nil {
 			log.Fatalf("Unable to serve %s on %s: %v", name, addr.String(), err)
 		}
@@ -389,9 +410,19 @@ func RedirectToHTTPS(port string) net.Addr {
 	return a
 }
 
+// EchoServerHTTPS sets up a https echo server
+func EchoServerHTTPS(port, cert, key string) net.Addr {
+	m, a := HTTPSServer("https echo", port, cert, key)
+	if m == nil {
+		return nil // error already logged
+	}
+	m.HandleFunc("/", EchoHandler)
+	return a
+}
+
 // LogRequest logs the incoming request, including headers when loglevel is verbose
 func LogRequest(r *http.Request, msg string) {
-	log.Infof("%s: %v %v %v %v (%s)", msg, r.Method, r.URL, r.Proto, r.RemoteAddr,
+	glog.V(2).Infof("%s: %v \"%v\" %v %v \"%s\" (%s)", msg, r.Method, r.URL, r.Proto, r.RemoteAddr, r.UserAgent(),
 		r.Header.Get("X-Forwarded-Proto"))
 	if log.LogVerbose() {
 		for name, headers := range r.Header {

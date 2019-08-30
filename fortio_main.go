@@ -97,6 +97,8 @@ var (
 			"if empty, use https:// prefix for standard internet CAs TLS")
 	echoPortFlag = flag.String("http-port", "8080",
 		"http echo server port. Can be in the form of host:port, ip:port, port or /unix/domain/path.")
+	echoHTTPSPortFlag = flag.String("https-port", "8082",
+		"https echo server port. Can be in the form of host:port, ip:port, port or /unix/domain/path.")
 	grpcPortFlag = flag.String("grpc-port", fnet.DefaultGRPCPort,
 		"grpc server port. Can be in the form of host:port, ip:port or port or /unix/domain/path or \""+disabled+
 			"\" to not start the grpc server.")
@@ -190,6 +192,9 @@ func main() {
 		isServer = true
 		if *grpcPortFlag != disabled {
 			fgrpc.PingServer(*grpcPortFlag, *certFlag, *keyFlag, fgrpc.DefaultHealthServiceName, uint32(*maxStreamsFlag))
+		}
+		if *echoHTTPSPortFlag != disabled {
+			fhttp.EchoServerHTTPS(*echoHTTPSPortFlag, *certFlag, *keyFlag)
 		}
 		if *redirectFlag != disabled {
 			fhttp.RedirectToHTTPS(*redirectFlag)

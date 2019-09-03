@@ -140,7 +140,7 @@ func closingServer(listener net.Listener) error {
 
 // HTTPServer creates an http server named name on address/port port.
 // Port can include binding address and/or be port 0.
-func HTTPServer(name string, port string) (*http.ServeMux, net.Addr) {
+func HTTPServer(name, port string) (*http.ServeMux, net.Addr) {
 	m := http.NewServeMux()
 	s := &http.Server{
 		Handler: m,
@@ -322,9 +322,18 @@ func CacheOn(w http.ResponseWriter) {
 // Returns the mux and addr where the listening socket is bound.
 // The .Port can be retrieved from it when requesting the 0 port as
 // input for dynamic http server.
-func Serve(port, debugPath string) (*http.ServeMux, net.Addr) {
+func Serve(port, debugPath, cert, key string) (*http.ServeMux, net.Addr) {
 	startTime = time.Now()
-	mux, addr := HTTPServer("echo", port)
+
+	var mux *http.ServeMux
+	var addr net.Addr
+
+	if cert == "" {
+		mux, addr = HTTPServer("echo", port)
+	} else {
+		mux, addr = HTTPSServer("echo", port, cert, key)
+	}
+
 	if addr == nil {
 		return nil, nil // error already logged
 	}
@@ -338,7 +347,7 @@ func Serve(port, debugPath string) (*http.ServeMux, net.Addr) {
 // ServeTCP is Serve() but restricted to TCP (return address is assumed
 // to be TCP - will panic for unix domain)
 func ServeTCP(port, debugPath string) (*http.ServeMux, *net.TCPAddr) {
-	mux, addr := Serve(port, debugPath)
+	mux, addr := Serve(port, debugPath, "", "")
 	if addr == nil {
 		return nil, nil // error already logged
 	}
@@ -407,16 +416,6 @@ func RedirectToHTTPS(port string) net.Addr {
 		return nil // error already logged
 	}
 	m.HandleFunc("/", RedirectToHTTPSHandler)
-	return a
-}
-
-// EchoServerHTTPS sets up a https echo server
-func EchoServerHTTPS(port, cert, key string) net.Addr {
-	m, a := HTTPSServer("https echo", port, cert, key)
-	if m == nil {
-		return nil // error already logged
-	}
-	m.HandleFunc("/", EchoHandler)
 	return a
 }
 

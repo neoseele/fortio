@@ -527,7 +527,7 @@ func TestPayloadWithEchoBack(t *testing.T) {
 
 func TestUnixDomainHttp(t *testing.T) {
 	uds := fnet.GetUniqueUnixDomainPath("fortio-http-test-uds")
-	_, addr := Serve(uds, "/debug1")
+	_, addr := Serve(uds, "/debug1", "", "")
 	if addr == nil {
 		t.Fatalf("Error for Serve for %s", uds)
 	}
@@ -941,9 +941,9 @@ func TestFetchAndOnBehalfOf(t *testing.T) {
 }
 
 func TestServeError(t *testing.T) {
-	_, addr := Serve("0", "")
+	_, addr := Serve("0", "", "", "")
 	port := fnet.GetPort(addr)
-	mux2, addr2 := Serve(port, "")
+	mux2, addr2 := Serve(port, "", "", "")
 	if mux2 != nil || addr2 != nil {
 		t.Errorf("2nd Serve() on same port %v should have failed: %v %v", port, mux2, addr2)
 	}

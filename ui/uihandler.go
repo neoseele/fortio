@@ -860,10 +860,10 @@ func downloadOne(w http.ResponseWriter, client *fhttp.Client, name string, u str
 // Serve starts the fhttp.Serve() plus the UI server on the given port
 // and paths (empty disables the feature). uiPath should end with /
 // (be a 'directory' path). Returns true if server is started successfully.
-func Serve(baseurl, port, debugpath, uipath, staticRsrcDir string, datadir string, percentileList []float64) bool {
+func Serve(baseurl, port, debugpath, uipath, staticRsrcDir string, datadir string, percentileList []float64, cert, key string) bool {
 	baseURL = baseurl
 	startTime = time.Now()
-	mux, addr := fhttp.Serve(port, debugpath)
+	mux, addr := fhttp.Serve(port, debugpath, cert, key)
 	if addr == nil {
 		return false // Error already logged
 	}
@@ -936,7 +936,7 @@ func Serve(baseurl, port, debugpath, uipath, staticRsrcDir string, datadir strin
 	if strings.Contains(urlHostPort, "-unix-socket=") {
 		uiMsg += fmt.Sprintf("fortio curl %s http://localhost%s", urlHostPort, uiPath)
 	} else {
-		uiMsg += fmt.Sprintf("http://%s%s", urlHostPort, uiPath)
+		uiMsg += fmt.Sprintf("http(s)://%s%s", urlHostPort, uiPath)
 		if strings.Contains(urlHostPort, "localhost") {
 			uiMsg += "\n(or any host/ip reachable on this server)"
 		}

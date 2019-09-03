@@ -193,13 +193,13 @@ func main() {
 		if *grpcPortFlag != disabled {
 			fgrpc.PingServer(*grpcPortFlag, *certFlag, *keyFlag, fgrpc.DefaultHealthServiceName, uint32(*maxStreamsFlag))
 		}
-		if *echoHTTPSPortFlag != disabled {
-			fhttp.EchoServerHTTPS(*echoHTTPSPortFlag, *certFlag, *keyFlag)
-		}
 		if *redirectFlag != disabled {
 			fhttp.RedirectToHTTPS(*redirectFlag)
 		}
-		if !ui.Serve(baseURL, *echoPortFlag, *echoDbgPathFlag, *uiPathFlag, *staticDirFlag, *dataDirFlag, percList) {
+		if !ui.Serve(baseURL, *echoPortFlag, *echoDbgPathFlag, *uiPathFlag, *staticDirFlag, *dataDirFlag, percList, "", "") {
+			os.Exit(1) // error already logged
+		}
+		if !ui.Serve(baseURL, *echoHTTPSPortFlag, *echoDbgPathFlag, *uiPathFlag, *staticDirFlag, *dataDirFlag, percList, *certFlag, *keyFlag) {
 			os.Exit(1) // error already logged
 		}
 		for _, proxy := range proxies {
